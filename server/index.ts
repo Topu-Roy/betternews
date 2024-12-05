@@ -1,13 +1,18 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { env } from "@/utils/env";
 import type { ErrorResponseType } from "@/shared/types";
-import { env } from "../env";
+import { auth } from "@/lib/auth";
 
 const app = new Hono();
 
 app.get("/", c => {
   return c.text("Hello Hono!");
 });
+
+// Auth
+app.get("/api/auth/*", c => auth.handler(c.req.raw));
+app.post("/api/auth/*", c => auth.handler(c.req.raw));
 
 app.onError((err, c) => {
   function isFormError() {

@@ -27,7 +27,9 @@
     // Path aliases
     "paths": {
       "@/*": ["./server/*"],
-      "@/shared/*": ["./shared/*"]
+      "@/shared/*": ["./shared/*"],
+      "@/utils/*": ["./utils/*"],
+      "@/lib/*": ["./lib/*"]
     }
   }
 }

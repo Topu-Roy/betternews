@@ -7,3 +7,136 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+
+model User {
+  id              String          @id
+  name            String
+  email           String
+  emailVerified   Boolean         @map("email_verified")
+  image           String?
+  createdAt       DateTime        @map("created_at")
+  updatedAt       DateTime        @map("updated_at")
+  sessions        Session[]
+  accounts        Account[]
+  posts           Post[]
+  comments        Comment[]
+  postUpvotes     PostUpvote[]
+  commentsUpvotes CommentUpvote[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Post {
+  id            String       @id
+  userId        String       @map("user_id")
+  title         String
+  url           String?
+  content       String?
+  points        Int          @default(0)
+  commentsCount Int          @default(0) @map("comments_count")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  comments      Comment[]
+  postUpvotes   PostUpvote[]
+
+  User          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CommentUpvote CommentUpvote[]
+
+  @@map("post")
+}
+
+model Comment {
+  id              Int             @id @default(autoincrement())
+  postId          String          @map("post_id")
+  userId          String?         @map("user_id")
+  parentId        Int?            @map("parent_id")
+  content         String
+  depth           Int             @default(0)
+  commentCount    Int             @default(0) @map("comments_count")
+  points          Int             @default(0)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  commentsUpvotes CommentUpvote[]
+
+  Post Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User User? @relation(fields: [userId], references: [id])
+
+  ParentComment Comment?  @relation("ChildToParent", fields: [parentId], references: [id], onDelete: Cascade)
+  ChildComments Comment[] @relation("ChildToParent")
+
+  @@map("comment")
+}
+
+model PostUpvote {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  postId    String   @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  Post Post @relation(fields: [postId], references: [id])
+  User User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, postId])
+  @@map("post_upvote")
+}
+
+model CommentUpvote {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  commentId Int      @map("comment_id")
+  postId    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  Post    Post    @relation(fields: [postId], references: [id])
+  User    User    @relation(fields: [userId], references: [id])
+  Comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId, postId])
+  @@map("comment_upvote")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
